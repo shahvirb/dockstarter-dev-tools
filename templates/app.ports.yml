@@ -1,0 +1,6 @@
+services:
+  {{ service_name }}:
+    ports:
+      {%- for p in ports %}
+      - {{ p }}
+      {%- endfor %}

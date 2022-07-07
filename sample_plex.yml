@@ -1,0 +1,14 @@
+services:
+  plex:
+    image_x86_64: linuxserver/plex
+    image_aarch64: linuxserver/plex
+    container_name: plex
+    network_mode: host
+    ports:
+      - 80:80
+      - 57332:57332
+    environment:
+      - VERSION=docker
+    restart: always
+    volumes:
+      - ${PLEX_MEDIA_PATH}:/media/
