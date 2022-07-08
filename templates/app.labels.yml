@@ -1,0 +1,9 @@
+services:
+  {{ service_name }}:
+    labels:
+      com.dockstarter.appinfo.deprecated: "false"
+      com.dockstarter.appinfo.description: write description here
+      com.dockstarter.appinfo.nicename: write nice name here
+      {%- for e in env_vars %}
+      com.dockstarter.appvars.{{ e.name|lower }}: {{ e.value }}
+      {%- endfor %}

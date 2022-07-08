@@ -19,22 +19,21 @@ class DockerComposeFileSplitter:
             filegenerators.AppFileGenerator,
         ]
 
-        env_vars = []
+        env_vars = [filegenerators.EnvVariable(f'{self.service_yml["service_name"]}_enabled', '"false"')]
 
         for gen in self.GENERATORS:
             if gen.needs_generation(self.service_yml):
                 generator = gen(self.service_yml, self.env)
                 vars = generator.generate()
                 if vars:
-                    env_vars.append(vars)
+                    env_vars += vars
 
         for arch in yml_parse.get_image_keys(self.service_yml):
             generator = filegenerators.ImageFileGenerator(self.service_yml, self.env, arch)
             generator.generate()
 
-        # # Generate app.yml file
-        # self.service_yml['restart_variable'] = f'{self.service_yml["service_name"].upper()}_RESTART'
-        # generate('app.yml', self.service_yml, None, write_queue)
+        label_gen = filegenerators.LabelsFileGenerator(self.service_yml, self.env, env_vars)
+        label_gen.generate()
 
 if __name__ == "__main__":
     splitter = DockerComposeFileSplitter('sample_plex.yml')

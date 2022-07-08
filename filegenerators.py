@@ -5,6 +5,7 @@ TEMPLATE_YML_NETMODE = 'app.netmode.yml'
 TEMPLATE_YML_HOSTNAME = 'app.hostname.yml'
 TEMPLATE_YML_IMAGE = 'app.image.yml'
 TEMPLATE_YML_BASE = 'app.yml'
+TEMPLATE_YML_LABELS = 'app.labels.yml'
 
 def gen_yml(template, filename, service_yml, env):
     template_file = env.get_template(template)
@@ -88,7 +89,7 @@ class NetmodeFileGenerator(FileGenerator):
         self.template_file = TEMPLATE_YML_NETMODE
 
     def generate(self):
-        mode_var = EnvVariable(f'{self.service_yml["service_name"].upper()}_NETWORK_MODE', '')
+        mode_var = EnvVariable(f'{self.service_yml["service_name"].upper()}_NETWORK_MODE', '""')
         render_vars = self.service_yml
         render_vars['netmode_variable'] = mode_var.name
         super().generate(render_vars)
@@ -104,3 +105,16 @@ class PortsFileGenerator(FileGenerator):
     @classmethod
     def needs_generation(cls, service_yml):
         return bool(len(service_yml['ports']))
+
+
+class LabelsFileGenerator(FileGenerator):
+    def __init__(self, service_yml, jinja_env, env_vars):
+        super().__init__(service_yml, jinja_env)
+        self.set_filename('labels')
+        self.template_file = TEMPLATE_YML_LABELS
+        self.env_vars = env_vars
+
+    def generate(self):
+        render_vars = self.service_yml
+        render_vars['env_vars'] = self.env_vars
+        super().generate(render_vars)
