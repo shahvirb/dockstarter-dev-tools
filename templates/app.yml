@@ -16,3 +16,4 @@ services:
       {%- for v in volumes %}
       - {{ v }}
       {%- endfor %}
+      - ${DOCKERSTORAGEDIR}:/storage
