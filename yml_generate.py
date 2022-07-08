@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import jinja2
 import yml_parse
+import filegenerators
 
 DIR_TEMPLATES = 'templates'
 
@@ -19,35 +20,24 @@ class DockerComposeFileSplitter:
         self.env = jinja2.Environment(loader=jinja2.FileSystemLoader(DIR_TEMPLATES))
 
     def generate_files(self):
-        write_queue = []
+        self.GENERATORS = [
+            filegenerators.HostnameFileGenerator,
+            filegenerators.PortsFileGenerator,
+            filegenerators.NetmodeFileGenerator,
+        ]
 
-        def generate(template, service_yml, filetype, write_queue):
-            template_file = self.env.get_template(template)
-            contents = template_file.render(self.service_yml)
-            filename = f'{service_yml["service_name"]}.{filetype}.yml' if filetype else f'{service_yml["service_name"]}.yml'
-            print(f'Generating {filename}')
-            print(contents)
-            write_queue.append(WriteFile(filename, contents))
+        for gen in self.GENERATORS:
+            if gen.needs_generation(self.service_yml):
+                generator = gen(self.service_yml, self.env)
+                generator.generate()
 
-        # Generate image files
-        image_types = yml_parse.get_image_keys(self.service_yml)
-        for type in image_types:
-            generate('app.image.yml', self.service_yml, type, write_queue)
+        for arch in yml_parse.get_image_keys(self.service_yml):
+            generator = filegenerators.ImageFileGenerator(self.service_yml, self.env, arch)
+            generator.generate()
 
-        # Generate ports file
-        if len(self.service_yml['ports']):
-            generate('app.ports.yml', self.service_yml, 'ports', write_queue)
-
-        # Generate netmode file
-        self.service_yml['netmode_variable'] = f'{self.service_yml["service_name"].upper()}_NETWORK_MODE'
-        generate('app.netmode.yml', self.service_yml, 'netmode', write_queue)
-
-        # Generate hostname file
-        generate('app.hostname.yml', self.service_yml, 'hostname', write_queue)
-
-        # Generate app.yml file
-        self.service_yml['restart_variable'] = f'{self.service_yml["service_name"].upper()}_RESTART'
-        generate('app.yml', self.service_yml, None, write_queue)
+        # # Generate app.yml file
+        # self.service_yml['restart_variable'] = f'{self.service_yml["service_name"].upper()}_RESTART'
+        # generate('app.yml', self.service_yml, None, write_queue)
 
 if __name__ == "__main__":
     splitter = DockerComposeFileSplitter('sample_plex.yml')
