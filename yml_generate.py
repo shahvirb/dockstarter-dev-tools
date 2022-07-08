@@ -16,6 +16,7 @@ class DockerComposeFileSplitter:
             filegenerators.HostnameFileGenerator,
             filegenerators.PortsFileGenerator,
             filegenerators.NetmodeFileGenerator,
+            filegenerators.AppFileGenerator,
         ]
 
         env_vars = []

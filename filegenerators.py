@@ -41,13 +41,13 @@ class FileGenerator:
         return None
 
     def set_filename(self, type=None):
-        self.filename = self.service_yml["service_name"] + f'.{type}.yml' if type else f'.yml'
+        self.filename = self.service_yml["service_name"] + (f'.{type}.yml' if type else f'.yml')
 
     def write(self):
         raise NotImplementedError
 
 
-class BaseFileGenerator(FileGenerator):
+class AppFileGenerator(FileGenerator):
     def __init__(self, service_yml, jinja_env):
         super().__init__(service_yml, jinja_env)
         self.set_filename(None)
