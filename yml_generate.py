@@ -1,17 +1,9 @@
-from dataclasses import dataclass
+
 import jinja2
 import yml_parse
 import filegenerators
 
 DIR_TEMPLATES = 'templates'
-
-@dataclass()
-class WriteFile:
-    name: str
-    contents: str
-
-    def write(self):
-        pass
 
 
 class DockerComposeFileSplitter:
@@ -26,10 +18,14 @@ class DockerComposeFileSplitter:
             filegenerators.NetmodeFileGenerator,
         ]
 
+        env_vars = []
+
         for gen in self.GENERATORS:
             if gen.needs_generation(self.service_yml):
                 generator = gen(self.service_yml, self.env)
-                generator.generate()
+                vars = generator.generate()
+                if vars:
+                    env_vars.append(vars)
 
         for arch in yml_parse.get_image_keys(self.service_yml):
             generator = filegenerators.ImageFileGenerator(self.service_yml, self.env, arch)

@@ -1,9 +1,10 @@
-from abc import ABC
+from dataclasses import dataclass
 
 TEMPLATE_YML_PORTS = 'app.ports.yml'
 TEMPLATE_YML_NETMODE = 'app.netmode.yml'
 TEMPLATE_YML_HOSTNAME = 'app.hostname.yml'
 TEMPLATE_YML_IMAGE = 'app.image.yml'
+TEMPLATE_YML_BASE = 'app.yml'
 
 def gen_yml(template, filename, service_yml, env):
     template_file = env.get_template(template)
@@ -12,6 +13,13 @@ def gen_yml(template, filename, service_yml, env):
     print('--------------------------')
     print(contents)
     print('--------------------------')
+    return contents
+
+
+@dataclass
+class EnvVariable:
+    name: str
+    value: str
 
 
 class FileGenerator:
@@ -20,13 +28,17 @@ class FileGenerator:
         self.env = jinja_env
         self.filename = None
         self.contents = None
+        self.template_file = None
 
     @classmethod
     def needs_generation(cls, service_yml):
         return True
 
-    def generate(self):
-        raise NotImplementedError
+    def generate(self, render_vars=None):
+        if not render_vars:
+            render_vars = self.service_yml
+        self.contents = gen_yml(self.template_file, self.filename, render_vars, self.env)
+        return None
 
     def set_filename(self, type=None):
         self.filename = self.service_yml["service_name"] + f'.{type}.yml' if type else f'.yml'
@@ -34,46 +46,61 @@ class FileGenerator:
     def write(self):
         raise NotImplementedError
 
+
+class BaseFileGenerator(FileGenerator):
+    def __init__(self, service_yml, jinja_env):
+        super().__init__(service_yml, jinja_env)
+        self.set_filename(None)
+        self.template_file = TEMPLATE_YML_BASE
+
+    def generate(self):
+        restart_var = EnvVariable(f'{self.service_yml["service_name"].upper()}_RESTART', 'unless-stopped')
+        render_vars = self.service_yml
+        render_vars['restart_variable'] = restart_var.name
+        super().generate(render_vars)
+        return [restart_var]
+
+
 class HostnameFileGenerator(FileGenerator):
     def __init__(self, service_yml, jinja_env):
         super().__init__(service_yml, jinja_env)
         self.set_filename('hostname')
+        self.template_file = TEMPLATE_YML_HOSTNAME
 
-    def generate(self):
-        gen_yml(TEMPLATE_YML_HOSTNAME, self.filename, self.service_yml, self.env)
 
 class ImageFileGenerator(FileGenerator):
     def __init__(self, service_yml, jinja_env, arch):
         super().__init__(service_yml, jinja_env)
         self.arch = arch
         self.set_filename(arch)
+        self.template_file = TEMPLATE_YML_IMAGE
 
     def generate(self):
         render_vars = self.service_yml
         render_vars["image_arch"] = self.service_yml[f'image_{self.arch}']
-        gen_yml(TEMPLATE_YML_IMAGE, self.filename, self.service_yml, self.env)
+        super().generate(render_vars)
 
 
 class NetmodeFileGenerator(FileGenerator):
     def __init__(self, service_yml, jinja_env):
         super().__init__(service_yml, jinja_env)
         self.set_filename('netmode')
+        self.template_file = TEMPLATE_YML_NETMODE
 
     def generate(self):
-        # TODO should this really be stored back into the service_yml or just some render_vars that is passed to gen_yml
-        self.service_yml['netmode_variable'] = f'{self.service_yml["service_name"].upper()}_NETWORK_MODE'
-        gen_yml(TEMPLATE_YML_NETMODE, self.filename, self.service_yml, self.env)
-        # TODO what if we append some sort of label_vars list with the variable name we just created
+        mode_var = EnvVariable(f'{self.service_yml["service_name"].upper()}_NETWORK_MODE', '')
+        render_vars = self.service_yml
+        render_vars['netmode_variable'] = mode_var.name
+        super().generate(render_vars)
+        return [mode_var]
 
 
 class PortsFileGenerator(FileGenerator):
     def __init__(self, service_yml, jinja_env):
         super().__init__(service_yml, jinja_env)
         self.set_filename('ports')
+        self.template_file = TEMPLATE_YML_PORTS
 
     @classmethod
     def needs_generation(cls, service_yml):
         return bool(len(service_yml['ports']))
-
-    def generate(self):
-        gen_yml(TEMPLATE_YML_PORTS, self.filename, self.service_yml, self.env)
