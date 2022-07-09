@@ -30,6 +30,7 @@ def gen_yml(template, filename, service_yml, env):
 
     # Using ruamel.yaml to preserve quotes
     yaml = ruamel.yaml.YAML()
+    yaml.indent(mapping=2, sequence=2, offset=2)
     yaml.preserve_quotes = True
     data = yaml.load(contents)
     data = sort_yaml(data)
