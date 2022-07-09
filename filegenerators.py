@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import pathlib
 
 TEMPLATE_YML_PORTS = 'app.ports.yml'
 TEMPLATE_YML_NETMODE = 'app.netmode.yml'
@@ -44,8 +45,10 @@ class FileGenerator:
     def set_filename(self, type=None):
         self.filename = self.service_yml["service_name"] + (f'.{type}.yml' if type else f'.yml')
 
-    def write(self):
-        raise NotImplementedError
+    def write(self, write_dir):
+        filepath = pathlib.Path(write_dir) / self.filename
+        print(f'Writing {filepath}')
+        filepath.write_text(self.contents)
 
 
 class AppFileGenerator(FileGenerator):
