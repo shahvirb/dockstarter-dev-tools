@@ -1,4 +1,4 @@
-
+import click
 import jinja2
 import yml_parse
 import filegenerators
@@ -35,6 +35,18 @@ class DockerComposeFileSplitter:
         label_gen = filegenerators.LabelsFileGenerator(self.service_yml, self.env, env_vars)
         label_gen.generate()
 
-if __name__ == "__main__":
-    splitter = DockerComposeFileSplitter('sample_plex.yml')
+
+@click.command()
+@click.argument('file', type=click.Path(exists=True))
+def main(file):
+    """
+    Splits the docker-compose.yml into the several constituent .yml files expected for DockSTARTer apps
+
+    FILE is the docker-compose.yml file to be split
+    """
+    pass
+    splitter = DockerComposeFileSplitter(file)
     splitter.generate_files()
+
+if __name__ == "__main__":
+    main()
