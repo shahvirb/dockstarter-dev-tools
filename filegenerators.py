@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import pathlib
+import yaml
 
 TEMPLATE_YML_PORTS = 'app.ports.yml'
 TEMPLATE_YML_NETMODE = 'app.netmode.yml'
@@ -8,9 +9,15 @@ TEMPLATE_YML_IMAGE = 'app.image.yml'
 TEMPLATE_YML_BASE = 'app.yml'
 TEMPLATE_YML_LABELS = 'app.labels.yml'
 
+
 def gen_yml(template, filename, service_yml, env):
     template_file = env.get_template(template)
     contents = template_file.render(service_yml)
+
+    # Now let's turn this back into yaml so we can dump with alphabetically sorted keys
+    y = yaml.safe_load(contents)
+    contents = yaml.dump(y, sort_keys=True)
+
     print(f'Generating {filename}')
     print('--------------------------')
     print(contents)
@@ -63,6 +70,7 @@ class AppFileGenerator(FileGenerator):
         render_vars['restart_variable'] = restart_var.name
         super().generate(render_vars)
         return [restart_var]
+        # TODO we also need to merge in other yml contents written by the user in the compose file
 
 
 class HostnameFileGenerator(FileGenerator):
@@ -140,3 +148,4 @@ class LabelsFileGenerator(FileGenerator):
         render_vars = self.service_yml
         render_vars['env_vars'] = self.env_vars
         super().generate(render_vars)
+        #TODO we also need to merge in other labels written by the user in the compose file

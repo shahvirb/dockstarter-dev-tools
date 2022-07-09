@@ -31,8 +31,6 @@ class DockerComposeFileSplitter:
                 vars = generator.generate()
                 if vars:
                     env_vars += vars
-                # DEBUG REMOVE
-                return
 
         for arch in yml_parse.get_image_keys(self.service_yml):
             generator = filegenerators.ImageFileGenerator(self.service_yml, self.env, arch)
