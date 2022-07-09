@@ -1,6 +1,6 @@
 services:
   {{ service_name }}:
     ports:
-      {%- for p in ports %}
-      - {{ p }}
+      {%- for e in port_vars %}
+      - {% raw %}${{% endraw %}{{ e.name }}{% raw %}}{% endraw %}:{{ e.value }}
       {%- endfor %}

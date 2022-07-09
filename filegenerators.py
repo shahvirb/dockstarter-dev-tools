@@ -96,6 +96,15 @@ class NetmodeFileGenerator(FileGenerator):
         return [mode_var]
 
 
+def port_env_vars(port_mappings, service_name):
+    vars = []
+    for mapping in port_mappings:
+        left, right = mapping.split(':')
+        name = f'{service_name.upper()}_PORT_{right}'
+        vars.append(EnvVariable(name, left))
+    return vars
+
+
 class PortsFileGenerator(FileGenerator):
     def __init__(self, service_yml, jinja_env):
         super().__init__(service_yml, jinja_env)
@@ -105,6 +114,16 @@ class PortsFileGenerator(FileGenerator):
     @classmethod
     def needs_generation(cls, service_yml):
         return bool(len(service_yml['ports']))
+
+    def generate(self):
+        env_vars = port_env_vars(self.service_yml['ports'], self.service_yml['service_name'])
+        render_vars = self.service_yml
+        render_vars['port_vars'] = env_vars
+        super().generate(render_vars)
+        # Revise all the env_vars values now so that the port numbers are strings. eg 80 -> "80"
+        for ev in env_vars:
+            ev.value = f'"{ev.value}"'
+        return env_vars
 
 
 class LabelsFileGenerator(FileGenerator):
