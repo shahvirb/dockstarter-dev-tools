@@ -12,6 +12,18 @@ TEMPLATE_YML_BASE = 'app.yml'
 TEMPLATE_YML_LABELS = 'app.labels.yml'
 
 
+def sort_yaml(d):
+    # https://stackoverflow.com/questions/40226610/ruamel-yaml-equivalent-of-sort-keys
+    if isinstance(d, dict):
+        res = dict()
+        for k in sorted(d.keys()):
+            res[k] = sort_yaml(d[k])
+        return res
+    if isinstance(d, list):
+        return sorted(d)
+    return d
+
+
 def gen_yml(template, filename, service_yml, env):
     template_file = env.get_template(template)
     contents = template_file.render(service_yml)
@@ -20,6 +32,7 @@ def gen_yml(template, filename, service_yml, env):
     yaml = ruamel.yaml.YAML()
     yaml.preserve_quotes = True
     data = yaml.load(contents)
+    data = sort_yaml(data)
     buffer = io.BytesIO()
     yaml.dump(data, buffer)
     contents = buffer.getvalue()

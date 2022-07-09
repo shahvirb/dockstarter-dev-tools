@@ -20,8 +20,10 @@ def parse_service(yaml):
     parsed['service_name'] = service_name
     return parsed
 
+
 def get_image_keys(service_yml):
     return [k.split('image_')[-1] for k in service_yml.keys() if k.startswith('image_')]
+
 
 if __name__ == "__main__":
     print(parse_service(load_yaml('sample_plex.yml')))
