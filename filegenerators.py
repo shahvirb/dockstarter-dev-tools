@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import pathlib
-import yaml
+import ruamel.yaml
+import io
+import sys
 
 TEMPLATE_YML_PORTS = 'app.ports.yml'
 TEMPLATE_YML_NETMODE = 'app.netmode.yml'
@@ -14,13 +16,17 @@ def gen_yml(template, filename, service_yml, env):
     template_file = env.get_template(template)
     contents = template_file.render(service_yml)
 
-    # Now let's turn this back into yaml so we can dump with alphabetically sorted keys
-    y = yaml.safe_load(contents)
-    contents = yaml.dump(y, sort_keys=True)
+    # Using ruamel.yaml to preserve quotes
+    yaml = ruamel.yaml.YAML()
+    yaml.preserve_quotes = True
+    data = yaml.load(contents)
+    buffer = io.BytesIO()
+    yaml.dump(data, buffer)
+    contents = buffer.getvalue()
 
     print(f'Generating {filename}')
     print('--------------------------')
-    print(contents)
+    yaml.dump(data, sys.stdout)
     print('--------------------------')
     return contents
 

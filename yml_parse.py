@@ -1,4 +1,5 @@
-import yaml
+from ruamel import yaml
+
 
 def load_yaml(filename):
     with open(filename, 'r') as stream:
