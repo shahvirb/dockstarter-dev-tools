@@ -74,7 +74,8 @@ class FileGenerator:
     def write(self, write_dir):
         filepath = pathlib.Path(write_dir) / self.filename
         print(f'Writing {filepath}')
-        filepath.write_text(self.contents)
+        with open(filepath, 'wb') as file:
+            file.write(self.contents)
 
 
 class AppFileGenerator(FileGenerator):
